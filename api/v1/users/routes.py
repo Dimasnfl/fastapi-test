@@ -7,6 +7,7 @@ from models import users as Models
 from schemas import users as Schemas
 from datetime import timedelta
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from core.services.users import crud
 
 router = APIRouter(
     tags=["users"],
