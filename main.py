@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
-from api.users import users
+from api.v1.users import routes as user_routes
 
 app = FastAPI()
-app.include_router(users.router)
+app.include_router(user_routes.router, prefix="/api/v1/users")
 
 
 @app.get("/")

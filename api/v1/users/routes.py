@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, responses, Request
 from sqlalchemy.orm import Session
 from core import security
-from core.services.users import crud
+from core.services.users import auth
 from database.db import get_db
 from models import users as Models
 from schemas import users as Schemas
@@ -9,7 +9,6 @@ from datetime import timedelta
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(
-    prefix="/api/users",
     tags=["users"],
     responses={404: {"message": "User not found"}}
 )
@@ -31,7 +30,7 @@ async def get_user_by_id(request: Request, user_id: int, db: Session = Depends(g
 
 
 @router.post("/create-user")
-@security.check_authorization
+# @security.check_authorization
 async def create_user(request: Request, user: Schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
@@ -61,7 +60,7 @@ async def upload_img(request: Request, uploaded_file: UploadFile):
 
 @router.post("/auth/login")
 async def login_user(user: Schemas.UserLogin, db: Session = Depends(get_db)):
-    if crud.authenticate_user(db, user.email, user.password) is False:
+    if auth.authenticate_user(db, user.email, user.password) is False:
         return responses.JSONResponse(content={
             "message": "Invalid credentials"
         }, status_code=401)
