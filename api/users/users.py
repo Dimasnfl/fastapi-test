@@ -1,25 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, responses, Request
 from sqlalchemy.orm import Session
-from database import get_db
-from models.users import crud, models, hash
+from core import security
+from core.services.users import crud
+from database.db import get_db
+from models import users as Models
 from schemas import users as Schemas
 from datetime import timedelta
+from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(
-    prefix="/users",
+    prefix="/api/users",
     tags=["users"],
     responses={404: {"message": "User not found"}}
 )
 
 @router.get("/")
-@hash.check_authorization
+@security.check_authorization
 async def get_all_user(request: Request, db: Session = Depends(get_db)):
-    users = db.query(models.Users).all()
-    return users
+    all_user = db.query(Models.Users).all()
+    return all_user
 
 
 @router.get("/{user_id}")
-@hash.check_authorization
+@security.check_authorization
 async def get_user_by_id(request: Request, user_id: int, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_id(db, user_id=user_id)
     if db_user is None:
@@ -28,7 +31,7 @@ async def get_user_by_id(request: Request, user_id: int, db: Session = Depends(g
 
 
 @router.post("/create-user")
-@hash.check_authorization
+@security.check_authorization
 async def create_user(request: Request, user: Schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_email(db, email=user.email)
     if db_user:
@@ -45,9 +48,9 @@ async def create_user(request: Request, user: Schemas.UserCreate, db: Session = 
 
 
 @router.post("/upload-img")
-@hash.check_authorization
+@security.check_authorization
 async def upload_img(request: Request, uploaded_file: UploadFile):
-    file_location = f"img/{uploaded_file.filename}"
+    file_location = f"static/img/{uploaded_file.filename}"
     contents = await uploaded_file.read()
     
     with open(file_location, "wb+") as file_object:
@@ -63,8 +66,8 @@ async def login_user(user: Schemas.UserLogin, db: Session = Depends(get_db)):
             "message": "Invalid credentials"
         }, status_code=401)
         
-    access_token_expires = timedelta(minutes=5)
-    access_token = hash.create_access_token(
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
         data= {
             "sub": user.email
         },
@@ -72,7 +75,7 @@ async def login_user(user: Schemas.UserLogin, db: Session = Depends(get_db)):
     )
     
     return responses.JSONResponse(content={
-        "message": "Login successful",
+        "message": "Login successfull",
         "access_token": access_token,
         "token_type": "bearer"
     }, status_code=200)

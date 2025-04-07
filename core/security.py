@@ -1,8 +1,9 @@
 from passlib.hash import pbkdf2_sha256
-import jwt, os, asyncio
+import jwt, asyncio
 from datetime import timedelta, datetime, timezone
 from fastapi import HTTPException
 from functools import wraps
+from core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 
 
 def hash_password(password: str):
@@ -18,14 +19,14 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(payload=to_encode, key=os.getenv('SECRET_KEY'), algorithm="HS256")
+    encoded_jwt = jwt.encode(payload=to_encode, key=SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
 def decode_token(token):
-    return jwt.decode(token, key=os.getenv('SECRET_KEY'), algorithms="HS256")
+    return jwt.decode(token, key=SECRET_KEY, algorithms=ALGORITHM)
 
 def check_authorization(func):
     @wraps(func)

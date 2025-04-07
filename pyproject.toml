@@ -35,7 +35,8 @@ dependencies = [
     "types-redis (==4.6.0.20241004)",
     "types-setuptools (==76.0.0.20250313)",
     "typing-extensions (==4.13.0)",
-    "uvicorn (==0.34.0)"
+    "uvicorn (==0.34.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)"
 ]
 
 
