@@ -48,8 +48,10 @@ async def create_user(request: Request, user: Schemas.UserCreate, db: Session = 
 @hash.check_authorization
 async def upload_img(request: Request, uploaded_file: UploadFile):
     file_location = f"img/{uploaded_file.filename}"
+    contents = await uploaded_file.read()
+    
     with open(file_location, "wb+") as file_object:
-        file_object.write(uploaded_file.file.read())
+        file_object.write(contents)
         
     return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
 
@@ -61,7 +63,7 @@ async def login_user(user: Schemas.UserLogin, db: Session = Depends(get_db)):
             "message": "Invalid credentials"
         }, status_code=401)
         
-    access_token_expires = timedelta(minutes=1)
+    access_token_expires = timedelta(minutes=5)
     access_token = hash.create_access_token(
         data= {
             "sub": user.email
