@@ -1,18 +1,43 @@
 from pydantic import BaseModel
+from typing import List
 
-class UserBase(BaseModel):
+
+class BaseSchema(BaseModel):
+    model_config = {
+        "from_attributes": True
+    }
+    
+class BaseUser(BaseSchema):
     email: str
     
-class UserCreate(UserBase):
+    
+# show users
+class GetUsers(BaseUser):
+    name: str
+    user_id: int
+    
+class GetUsersResponse(BaseSchema):
+    message: str
+    data: List[GetUsers]
+    
+
+# create user
+class CreateUser(BaseUser):
     name: str
     password: str
     
-class User(UserBase):
-    user_id: int
+    
+# show created user
+class GetCreatedUser(BaseUser):
     name: str
+    user_id: int
 
-class Config:
-    orm_mode = True
+class GetCreateUsersResponse(BaseSchema):
+    message: str
+    data: GetCreatedUser
 
-class UserLogin(UserBase):
+
+# input email&password
+class LoginUser(BaseUser):
     password: str
+    
