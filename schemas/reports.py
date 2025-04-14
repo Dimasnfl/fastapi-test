@@ -1,0 +1,31 @@
+from pydantic import BaseModel
+from typing import List
+
+
+class BaseSchema(BaseModel):
+    model_config = {
+        "from_attributes": True
+    }
+
+# relationship scheme of reports to users
+class ReportUser(BaseSchema):
+    user_id: int
+    name: str
+    email: str
+
+# relationship scheme of reports to users
+class ReportCategory(BaseSchema):
+    category_id: int
+    name: str
+
+# show all report
+class GetReports(BaseSchema):
+    report_id: int
+    owner: ReportUser
+    category: ReportCategory
+    image_path: str
+    body: str
+    
+class GetReportsResponse(BaseSchema):
+    message: str
+    data: List[GetReports]
