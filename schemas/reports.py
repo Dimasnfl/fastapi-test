@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class BaseSchema(BaseModel):
@@ -23,9 +23,27 @@ class GetReports(BaseSchema):
     report_id: int
     owner: ReportUser
     category: ReportCategory
-    image_path: str
+    image_path: Optional[str]
     body: str
     
 class GetReportsResponse(BaseSchema):
     message: str
     data: List[GetReports]
+    
+    
+# create report
+class CreateReport(BaseSchema):
+    category_id: int
+    body: str
+    image_path: Optional[str]
+    
+    
+# show created report
+class GetCreatedReport(BaseSchema):
+    report_id: int
+    image_path: Optional[str]
+    body: str
+
+class GetCreatedReportResponse(BaseSchema):
+    message: str
+    data: GetCreatedReport

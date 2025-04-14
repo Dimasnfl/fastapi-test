@@ -1,9 +1,12 @@
 from passlib.hash import pbkdf2_sha256
 import jwt, asyncio
 from datetime import timedelta, datetime, timezone
-from fastapi import HTTPException
+from fastapi import HTTPException, Request, Depends
 from functools import wraps
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
+from sqlalchemy.orm import Session
+from database.db import get_db
+from models import users
 
 
 def hash_password(password: str):
@@ -28,6 +31,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 def decode_token(token):
     return jwt.decode(token, key=SECRET_KEY, algorithms=ALGORITHM)
 
+
 def check_authorization(func):
     @wraps(func)
     async def wrapper(request, *args, **kwargs):
@@ -45,3 +49,26 @@ def check_authorization(func):
             raise HTTPException(status_code=401, detail=str(ex))
     return wrapper
         
+        
+def get_current_user(request: Request, db: Session = Depends(get_db)):
+    try:
+        token = request.headers.get("Authorization").split(" ")[1]
+        payload = decode_token(token)
+        
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token payload")
+
+        user_id = int(user_id)
+        
+        current_user = db.query(users.Users).filter(
+            users.Users.user_id == user_id,
+            users.Users.is_deleted == False
+        ).first()
+
+        if current_user is None:
+            raise HTTPException(status_code=404, detail="User not found or deleted")
+
+        return current_user
+    except Exception as ex:
+        raise HTTPException(status_code=401, detail=f"Unauthorized: {ex}")

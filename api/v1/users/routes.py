@@ -1,9 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, responses, Request
+from fastapi import APIRouter, Depends, HTTPException, responses, Request
 from sqlalchemy.orm import Session
 from core import security
 from core.services.users import auth
 from database.db import get_db
-from models import users as Models
 from schemas import users as Schemas
 from datetime import timedelta
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
@@ -17,7 +16,8 @@ router = APIRouter(
 
 @router.post("/auth/login")
 async def login_user(user: Schemas.LoginUser, db: Session = Depends(get_db)):
-    if auth.authenticate_user(db, user.email, user.password) is False:
+    data = auth.authenticate_user(db, user.email, user.password)
+    if not data:
         return responses.JSONResponse(content={
             "message": "Invalid credentials"
         }, status_code=401)
@@ -25,7 +25,7 @@ async def login_user(user: Schemas.LoginUser, db: Session = Depends(get_db)):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
         data= {
-            "sub": user.email
+            "sub": str(data.user_id)
         },
         expires_delta = access_token_expires
     )
@@ -60,7 +60,7 @@ async def get_user_by_id(request: Request, user_id: int, db: Session = Depends(g
 
 
 
-@router.post("/create-user", response_model=Schemas.GetCreateUsersResponse)
+@router.post("/create-user", response_model=Schemas.GetCreatedUserResponse)
 async def create_user(request: Request, user: Schemas.CreateUser, db: Session = Depends(get_db)):
     get_email = crud.get_user_by_email(db, email=user.email)
     if get_email:
@@ -83,16 +83,3 @@ async def delete_user(request: Request, user_id: int, db: Session = Depends(get_
     if data is None:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
-
-
-
-@router.post("/upload-img")
-@security.check_authorization
-async def upload_img(request: Request, uploaded_file: UploadFile):
-    file_location = f"static/img/{uploaded_file.filename}"
-    contents = await uploaded_file.read()
-    
-    with open(file_location, "wb+") as file_object:
-        file_object.write(contents)
-        
-    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}

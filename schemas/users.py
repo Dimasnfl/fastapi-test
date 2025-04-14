@@ -32,7 +32,7 @@ class GetCreatedUser(BaseUser):
     name: str
     user_id: int
 
-class GetCreateUsersResponse(BaseSchema):
+class GetCreatedUserResponse(BaseSchema):
     message: str
     data: GetCreatedUser
 
