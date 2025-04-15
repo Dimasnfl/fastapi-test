@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Optional
+from uuid import UUID
 
 
 class BaseSchema(BaseModel):
@@ -9,7 +10,7 @@ class BaseSchema(BaseModel):
 
 # relationship scheme of reports to users
 class ReportUser(BaseSchema):
-    user_id: int
+    user_id: UUID
     name: str
     email: str
 
@@ -20,7 +21,7 @@ class ReportCategory(BaseSchema):
 
 # show all report
 class GetReports(BaseSchema):
-    report_id: int
+    report_id: UUID
     owner: ReportUser
     category: ReportCategory
     image_path: Optional[str]
@@ -40,7 +41,7 @@ class CreateReport(BaseSchema):
     
 # show created report
 class GetCreatedReport(BaseSchema):
-    report_id: int
+    report_id: UUID
     image_path: Optional[str]
     body: str
 

@@ -8,6 +8,7 @@ from datetime import timedelta
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from core.services.users import crud
 from models.users import Users
+from uuid import UUID
 
 
 router = APIRouter(
@@ -58,7 +59,7 @@ async def get_all_user(
 
 @router.get("/{user_id}", response_model=Schemas.GetUsers)
 async def get_user_by_id(
-    user_id: int, 
+    user_id: UUID, 
     db: Session = Depends(get_db), 
     current_user: Users = Depends(security.get_current_user)
     ):
@@ -89,9 +90,9 @@ async def create_user(
 
 
 
-@router.delete("/{user_id}")
+@router.delete("/delete/{user_id}")
 async def delete_user(
-    user_id: int, 
+    user_id: UUID, 
     db: Session = Depends(get_db), 
     current_user: Users = Depends(security.get_current_user)
     ):

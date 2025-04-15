@@ -2,11 +2,13 @@ from sqlalchemy.orm import Session, joinedload
 from models.reports import Reports
 from models.categories import Categories
 from fastapi import HTTPException
+from uuid import UUID
+
 
 def get_all_report(db: Session):
     return db.query(Reports).join(Reports.owner).filter(Reports.owner.has(is_deleted=False)).options(joinedload(Reports.owner), joinedload(Reports.category)).all()
 
-def get_report_by_id(db: Session, report_id: int):
+def get_report_by_id(db: Session, report_id: UUID):
     return db.query(Reports).join(Reports.owner).filter(Reports.owner.has(is_deleted=False)).options(joinedload(Reports.owner), joinedload(Reports.category)).filter(Reports.report_id == report_id).first()
 
 
@@ -25,7 +27,7 @@ def validate_category(db: Session, category_id: int):
             }
         )
 
-def create_report(db: Session, report_data: dict, user_id: int):
+def create_report(db: Session, report_data: dict, user_id: UUID):
     validate_category(db, report_data["category_id"])
     
     data = Reports(

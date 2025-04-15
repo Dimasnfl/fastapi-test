@@ -6,6 +6,7 @@ from core.services.reports import crud
 from core import security
 from models.users import Users
 import os, uuid, shutil
+from uuid import UUID
 
 router = APIRouter(
     tags=["reports"],
@@ -28,7 +29,7 @@ async def get_all_report(
     
 @router.get("/{report_id}", response_model=Schemas.GetReports)
 async def get_report_by_id(
-    report_id: int, 
+    report_id: UUID, 
     db: Session = Depends(get_db), 
     current_user: Users = Depends(security.get_current_user)
     ):

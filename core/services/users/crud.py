@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from models import users
 from schemas import users as schemas
 from core.security import hash_password
+from uuid import UUID
+
 
 def get_active_users(db: Session):
     return db.query(users.Users).filter(users.Users.is_deleted == False).all()
@@ -9,10 +11,10 @@ def get_active_users(db: Session):
 def get_user_by_email(db: Session, email: str):
     return db.query(users.Users).filter(users.Users.email == email, users.Users.is_deleted == False).first()
     
-def get_user_by_id(db: Session, user_id: int):
+def get_user_by_id(db: Session, user_id: UUID):
     return db.query(users.Users).filter(users.Users.user_id == user_id, users.Users.is_deleted == False).first()
     
-def soft_delete_user(db: Session, user_id: int):
+def soft_delete_user(db: Session, user_id: UUID):
     user = db.query(users.Users).filter(users.Users.user_id == user_id, users.Users.is_deleted == False).first()
     if user:
         user.is_deleted = True

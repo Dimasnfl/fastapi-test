@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List
+from uuid import UUID
 
 
 class BaseSchema(BaseModel):
@@ -14,7 +15,7 @@ class BaseUser(BaseSchema):
 # show users
 class GetUsers(BaseUser):
     name: str
-    user_id: int
+    user_id: UUID
     
 class GetUsersResponse(BaseSchema):
     message: str
@@ -30,7 +31,7 @@ class CreateUser(BaseUser):
 # show created user
 class GetCreatedUser(BaseUser):
     name: str
-    user_id: int
+    user_id: UUID
 
 class GetCreatedUserResponse(BaseSchema):
     message: str

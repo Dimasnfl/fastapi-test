@@ -163,3 +163,4 @@ cython_debug/
 static/img/
 
 test_koneksi.py
+drop_all_table.py

@@ -6,6 +6,7 @@ from core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 from sqlalchemy.orm import Session
 from database.db import get_db
 from models import users
+from uuid import UUID
 
 
 def hash_password(password: str):
@@ -44,7 +45,7 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
         if user_id is None:
             raise HTTPException(status_code=401, detail="Invalid token payload")
 
-        user_id = int(user_id)
+        user_id = UUID(user_id)
         
         current_user = db.query(users.Users).filter(
             users.Users.user_id == user_id,
