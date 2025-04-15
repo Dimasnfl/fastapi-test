@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, responses, Request
+from fastapi import APIRouter, Depends, HTTPException, responses
 from sqlalchemy.orm import Session
 from core import security
 from core.services.users import auth
@@ -7,6 +7,7 @@ from schemas import users as Schemas
 from datetime import timedelta
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from core.services.users import crud
+from models.users import Users
 
 
 router = APIRouter(
@@ -17,10 +18,12 @@ router = APIRouter(
 @router.post("/auth/login")
 async def login_user(user: Schemas.LoginUser, db: Session = Depends(get_db)):
     data = auth.authenticate_user(db, user.email, user.password)
+    
     if not data:
-        return responses.JSONResponse(content={
-            "message": "Invalid credentials"
-        }, status_code=401)
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
         
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = security.create_access_token(
@@ -39,8 +42,11 @@ async def login_user(user: Schemas.LoginUser, db: Session = Depends(get_db)):
     
 
 @router.get("/", response_model=Schemas.GetUsersResponse)
-@security.check_authorization
-async def get_all_user(request: Request, db: Session = Depends(get_db)):
+async def get_all_user(
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(security.get_current_user)
+    ):
+    
     data = crud.get_active_users(db)
     users_response = [Schemas.GetUsers.model_validate(user) for user in data]
     return {
@@ -51,8 +57,12 @@ async def get_all_user(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_id}", response_model=Schemas.GetUsers)
-@security.check_authorization
-async def get_user_by_id(request: Request, user_id: int, db: Session = Depends(get_db)):
+async def get_user_by_id(
+    user_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(security.get_current_user)
+    ):
+    
     data = crud.get_user_by_id(db, user_id=user_id)
     if data is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -61,7 +71,10 @@ async def get_user_by_id(request: Request, user_id: int, db: Session = Depends(g
 
 
 @router.post("/create-user", response_model=Schemas.GetCreatedUserResponse)
-async def create_user(request: Request, user: Schemas.CreateUser, db: Session = Depends(get_db)):
+async def create_user(
+    user: Schemas.CreateUser, 
+    db: Session = Depends(get_db)
+    ):
     get_email = crud.get_user_by_email(db, email=user.email)
     if get_email:
         raise HTTPException(status_code=400, detail="Email already registered with another user")
@@ -77,8 +90,11 @@ async def create_user(request: Request, user: Schemas.CreateUser, db: Session = 
 
 
 @router.delete("/{user_id}")
-@security.check_authorization
-async def delete_user(request: Request, user_id: int, db: Session = Depends(get_db)):
+async def delete_user(
+    user_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(security.get_current_user)
+    ):
     data = crud.soft_delete_user(db, user_id=user_id)
     if data is None:
         raise HTTPException(status_code=404, detail="User not found")

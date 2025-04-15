@@ -14,8 +14,11 @@ router = APIRouter(
 
 
 @router.get("/", response_model=Schemas.GetReportsResponse)
-@security.check_authorization
-async def get_all_report(request: Request, db: Session = Depends(get_db)):
+async def get_all_report(
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(security.get_current_user)
+    ):
+    
     data = crud.get_all_report(db)
     reports_response = [Schemas.GetReports.model_validate(report) for report in data] 
     return {
@@ -23,19 +26,25 @@ async def get_all_report(request: Request, db: Session = Depends(get_db)):
         "data": reports_response
     }
     
-@router.get("/detail/{report_id}", response_model=Schemas.GetReports)
-@security.check_authorization
-async def get_report_by_id(request: Request, report_id: int, db: Session = Depends(get_db)):
+@router.get("/{report_id}", response_model=Schemas.GetReports)
+async def get_report_by_id(
+    report_id: int, 
+    db: Session = Depends(get_db), 
+    current_user: Users = Depends(security.get_current_user)
+    ):
+    
     data = crud.get_report_by_id(db, report_id=report_id)
     if data is None:
         raise HTTPException(status_code=404, detail="Report not found")
     return data
 
+
 @router.post("/create-report", response_model=Schemas.GetCreatedReportResponse)
 async def create_report(
-    request: Request, db: Session = Depends(get_db), 
+    db: Session = Depends(get_db), 
     category_id: int = Form(...), body: str = Form(...), image: UploadFile | None = File(None), 
-    current_user: Users = Depends(security.get_current_user)):
+    current_user: Users = Depends(security.get_current_user)
+    ):
     
     crud.validate_category(db, category_id)
     
@@ -61,7 +70,6 @@ async def create_report(
         },
         user_id=current_user.user_id
     )
-    
     reports_response = Schemas.GetCreatedReport.model_validate(data)
 
     return {

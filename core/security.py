@@ -1,8 +1,7 @@
 from passlib.hash import pbkdf2_sha256
-import jwt, asyncio
+import jwt
 from datetime import timedelta, datetime, timezone
 from fastapi import HTTPException, Request, Depends
-from functools import wraps
 from core.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY
 from sqlalchemy.orm import Session
 from database.db import get_db
@@ -30,29 +29,15 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 def decode_token(token):
     return jwt.decode(token, key=SECRET_KEY, algorithms=ALGORITHM)
-
-
-def check_authorization(func):
-    @wraps(func)
-    async def wrapper(request, *args, **kwargs):
-        headers = request.headers
-        try:
-            jwt_token = headers['Authorization'].split(" ",1)[1]
-            if decode_token(token=jwt_token) is False:
-                raise HTTPException(status_code=401, detail="Invalid Token")
-            
-            if asyncio.iscoroutinefunction(func):
-                return await func(request, *args, **kwargs)
-            else:
-                return func(request, *args, **kwargs)
-        except Exception as ex:
-            raise HTTPException(status_code=401, detail=str(ex))
-    return wrapper
         
         
 def get_current_user(request: Request, db: Session = Depends(get_db)):
     try:
-        token = request.headers.get("Authorization").split(" ")[1]
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Invalid authorization header")
+        
+        token = auth_header.split(" ")[1]        
         payload = decode_token(token)
         
         user_id = payload.get("sub")

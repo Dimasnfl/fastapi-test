@@ -7,7 +7,7 @@ def get_active_users(db: Session):
     return db.query(users.Users).filter(users.Users.is_deleted == False).all()
 
 def get_user_by_email(db: Session, email: str):
-    return db.query(users.Users).filter(users.Users.email == email).first()
+    return db.query(users.Users).filter(users.Users.email == email, users.Users.is_deleted == False).first()
     
 def get_user_by_id(db: Session, user_id: int):
     return db.query(users.Users).filter(users.Users.user_id == user_id, users.Users.is_deleted == False).first()
